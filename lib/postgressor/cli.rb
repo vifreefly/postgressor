@@ -1,5 +1,4 @@
 require 'uri'
-require 'open3'
 require 'thor'
 require 'dotenv/load'
 
@@ -12,10 +11,11 @@ module Postgressor
       preload!
 
       # Use psql `CREATE USER` instead of `createuser` CLI command, to automatically provide user password:
-      is_superuser = options[:superuser] ? 'SUPERUSER' : nil
-      psql_create_command = "CREATE USER #{@conf[:user]} WITH CREATEDB LOGIN #{is_superuser} PASSWORD '#{@conf[:password]}';"
+      is_superuser = "SUPERUSER" if options[:superuser]
+      psql_command = "CREATE USER #{@conf[:user]} WITH CREATEDB LOGIN #{is_superuser} PASSWORD '#{@conf[:password]}';"
 
-      if system "sudo", "-i", "-u", "postgres", "psql", "-c", psql_create_command
+      command = %W(sudo -i -u postgres psql -c #{psql_command})
+      if execute command
         say "Created user #{@conf[:user]}", :green
       end
     end
@@ -25,7 +25,8 @@ module Postgressor
     def dropuser
       preload!
 
-      if system "sudo", "-i", "-u", "postgres", "dropuser", @conf[:user]
+      command = %W(sudo -i -u postgres dropuser #{@conf[:user]})
+      if execute command
         say "Dropped user #{@conf[:user]}", :green
       end
     end
@@ -37,7 +38,8 @@ module Postgressor
     def createdb
       preload!
 
-      if system env, "createdb", @conf[:db], *@pg_cli_args
+      command = ["createdb", @conf[:db]] + @pg_cli_args
+      if execute command, with_env: true
         say "Created database #{@conf[:db]}", :green
       end
     end
@@ -47,7 +49,8 @@ module Postgressor
     def dropdb
       preload!
 
-      if system env, "dropdb", @conf[:db], *@pg_cli_args
+      command = ["dropdb", @conf[:db]] + @pg_cli_args
+      if execute command, with_env: true
         say "Dropped database #{@conf[:db]}", :green
       end
     end
@@ -60,19 +63,27 @@ module Postgressor
       preload!
 
       dump_file_name = "#{@conf[:db]}.dump"
-      if system env, "pg_dump", @conf[:db], *@pg_cli_args, "-Fc", "--no-acl", "--no-owner", "-f", dump_file_name
+      command = %W(pg_dump #{@conf[:db]} -Fc --no-acl --no-owner -f #{dump_file_name}) + @pg_cli_args
+
+      if execute command, with_env: true
         say "Dumped database #{@conf[:db]} to #{dump_file_name} file", :green
       end
     end
 
     # https://www.postgresql.org/docs/current/app-pgrestore.html
     desc "restoredb", "Restore app database from backup"
+    option :switch_to_superuser, type: :string, banner: "Temporary switch user to SUPERUSER while restoring db"
     def restoredb(dump_file_path)
       preload!
 
-      if system env, "pg_restore", dump_file_path, "-d", @conf[:db], *@pg_cli_args, "--no-acl", "--no-owner", "--verbose"
+      set_user_to_superuser if options[:switch_to_superuser]
+
+      command = %W(pg_restore #{dump_file_path} -d #{@conf[:db]} --no-acl --no-owner --verbose) + @pg_cli_args
+      if execute command, with_env: true
         say "Restored database #{@conf[:db]} from #{dump_file_path} file", :green
       end
+
+      set_user_to_nosuperuser if options[:switch_to_superuser]
     end
 
     ###
@@ -84,6 +95,34 @@ module Postgressor
     end
 
     private
+
+    def set_user_to_superuser
+      psql_command = "ALTER ROLE #{@conf[:user]} SUPERUSER;"
+      command = %W(sudo -i -u postgres psql -c #{psql_command})
+      if execute command
+        say "Set user #{@conf[:user]} to SUPERUSER", :green
+      end
+    end
+
+    def set_user_to_nosuperuser
+      psql_command = "ALTER ROLE #{@conf[:user]} NOSUPERUSER;"
+      command = %W(sudo -i -u postgres psql -c #{psql_command})
+      if execute command
+        say "Set user #{@conf[:user]} to NOSUPERUSER", :green
+      end
+    end
+
+    def execute(command, with_env: false)
+      if with_env
+        verbose_command = env.map { |k, v| "#{k}=#{v}" } + command
+        say("Executing: #{verbose_command.join(' ')}", :yellow) if ENV["VERBOSE"] == "true"
+
+        system env, *command
+      else
+        say("Executing: #{command.join(' ')}", :yellow) if ENV["VERBOSE"] == "true"
+        system *command
+      end
+    end
 
     def env
       { "PGPASSWORD" => @conf[:password] }
