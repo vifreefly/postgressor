@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Victor Afanasev"]
   spec.email         = ["vicfreefly@gmail.com"]
 
-  spec.summary       = "Manage your Postgres application credentials (user, database) easily using simple CLI commands"
+  spec.summary       = "Manage your application Postgres user and database easily using simple CLI commands"
   spec.description   = spec.summary
   spec.homepage      = "https://github.com/vifreefly/postgressor"
   spec.license       = "MIT"
