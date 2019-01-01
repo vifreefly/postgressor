@@ -18,6 +18,16 @@ Commands:
 
 All what you need is DATABASE_URL in format like: `DATABASE_URL="postgres://app_user:app_user_pass@host/app_db_name"`. Also Postgressor automatically check `.env` file (if present) **to read DATABASE_URL from there.**
 
+## Installation
+
+> Posgressor requires Ruby `>= 2.3.0`.
+
+To install:
+
+```
+$ gem install postgressor
+```
+
 ## Usage
 
 > Use `VERBOSE=true` env option (used in examples below) to print postgres commands which will be executed
