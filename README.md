@@ -1,5 +1,7 @@
 # Postgressor
 
+> **NEW:** added support for `config/database.yml` in version 0.2.0
+
 Get tired of typing the same commands over and over like creating Postgres user, database, creating and restoring database backups? Postgressor allow you to manage your (Postgres) application database and user within simple commands:
 
 ```
@@ -16,7 +18,11 @@ Commands:
   postgressor help [COMMAND]  # Describe available commands or one specific command
 ```
 
-All what you need is DATABASE_URL in format like: `DATABASE_URL="postgres://app_user:app_user_pass@host/app_db_name"`. Also Postgressor automatically check `.env` file (if present) **to read DATABASE_URL from there.**
+Postgressor can fetch required credentials from two sources:
+
+1. DATABASE_URL environment variable (default). Format: `DATABASE_URL="postgres://app_user:app_user_pass@host/app_db_name"`. Also postgressor automatically checks `.env` file (if present) **to read DATABASE_URL from there**.
+2. If DATABASE_URL env variable not present, postgressor will try to fetch credentials from `config/database.yml` (Rails style) file (if present). By default posgressor read `production` settings. If you want to use different environment, simply provide RAILS_ENV env before postgressor command. Example: `RAILS_ENV=development postressor createuser`.
+
 
 ## Installation
 
