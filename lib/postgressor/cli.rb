@@ -1,6 +1,7 @@
 require 'uri'
 require 'thor'
 require 'dotenv/load'
+require 'yaml'
 
 module Postgressor
   class CLI < Thor
@@ -130,8 +131,27 @@ module Postgressor
 
     def preload!
       url = ENV["DATABASE_URL"]
-      raise "Env variable DATABASE_URL is not provided" if url.nil? || url.strip.empty?
 
+      if url.nil? || url.strip.empty?
+        # If DATABASE_URL env not present, try to read from config/database.yml (Rails)
+        if File.exist?("config/database.yml")
+          settings = YAML.load_file("config/database.yml")
+          # By default, use production config, if RAILS_ENV not provided
+          config = ENV["RAILS_ENV"] ? settings[ENV["RAILS_ENV"]] : settings["production"]
+
+          preload_from_database_yml(config)
+        else
+          raise "Env variable DATABASE_URL or config/database.yml file not provided"
+        end
+      else
+        preload_from_database_url(url)
+      end
+
+      @pg_cli_args = ["-h", @conf[:host], "-U", @conf[:user]]
+      @pg_cli_args += ["-p", @conf[:port].to_s] if @conf[:port]
+    end
+
+    def preload_from_database_url(url)
       uri = URI.parse(url)
       raise "DB adapter is not postgres" if uri.scheme != "postgres"
 
@@ -143,9 +163,19 @@ module Postgressor
         user: uri.user,
         password: uri.password
       }
+    end
 
-      @pg_cli_args = ["-h", @conf[:host], "-U", @conf[:user]]
-      @pg_cli_args += ["-p", @conf[:port].to_s] if @conf[:port]
+    def preload_from_database_yml(config)
+      raise "DB adapter is not postgres" if config["adapter"] != "postgresql"
+
+      @conf = {
+        url: nil,
+        db: config["database"],
+        host: config["host"],
+        port: config["port"],
+        user: config["username"],
+        password: config["password"]
+      }
     end
   end
 end
