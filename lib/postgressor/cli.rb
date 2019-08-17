@@ -127,7 +127,7 @@ module Postgressor
     end
 
     def env
-      { "PGPASSWORD" => @conf[:password] }
+      { "PGPASSWORD" => @conf[:password].to_s }
     end
 
     def preload!
