@@ -2,6 +2,7 @@ require 'uri'
 require 'thor'
 require 'dotenv/load'
 require 'yaml'
+require 'erb'
 
 module Postgressor
   class CLI < Thor
@@ -135,7 +136,8 @@ module Postgressor
       if url.nil? || url.strip.empty?
         # If DATABASE_URL env not present, try to read from config/database.yml (Rails)
         if File.exist?("config/database.yml")
-          settings = YAML.load_file("config/database.yml")
+          settings = YAML.load(ERB.new(File.read "config/database.yml").result)
+
           # By default, use production config, if RAILS_ENV not provided
           config = ENV["RAILS_ENV"] ? settings[ENV["RAILS_ENV"]] : settings["production"]
 
