@@ -155,7 +155,7 @@ module Postgressor
 
     def preload_from_database_url(url)
       uri = URI.parse(url)
-      raise "DB adapter is not postgres" if uri.scheme != "postgres"
+      raise "DB adapter is not postgres" unless uri.scheme.include?("postgres")
 
       @conf = {
         url: url,
@@ -168,7 +168,7 @@ module Postgressor
     end
 
     def preload_from_database_yml(config)
-      raise "DB adapter is not postgres" if config["adapter"] != "postgresql"
+      raise "DB adapter is not postgres" unless config["adapter"].include?("postgres")
 
       @conf = {
         url: nil,
