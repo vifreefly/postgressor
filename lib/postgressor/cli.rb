@@ -61,14 +61,17 @@ module Postgressor
 
     # https://www.postgresql.org/docs/current/app-pgdump.html
     desc "dumpdb", "Dump (backup) app database"
-    def dumpdb
+    def dumpdb(dump_file_path = nil)
       preload!
 
-      dump_file_name = "#{@conf[:db]}.dump"
-      command = %W(pg_dump #{@conf[:db]} -Fc --no-acl --no-owner -f #{dump_file_name}) + @pg_cli_args
+      unless dump_file_path
+        dump_file_path = "#{@conf[:db]}.dump"
+      end
+
+      command = %W(pg_dump #{@conf[:db]} -Fc --no-acl --no-owner -f #{dump_file_path}) + @pg_cli_args
 
       if execute command, with_env: true
-        say "Dumped database #{@conf[:db]} to #{dump_file_name} file", :green
+        say "Dumped database #{@conf[:db]} to #{dump_file_path} file", :green
       end
     end
 

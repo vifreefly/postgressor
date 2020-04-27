@@ -86,7 +86,7 @@ Dropped database app_db
 To perform database backup to the current directory:
 
 ```
-$ DATABASE_URL="postgres://app_user:123456@localhost/app_db" VERBOSE=true postgressor dumpdb
+$ DATABASE_URL="postgres://app_user:123456@localhost/app_db" VERBOSE=true postgressor dumpdb app_db.dump
 
 Executing: PGPASSWORD=123456 pg_dump app_db -Fc --no-acl --no-owner -f app_db.dump -h localhost -U app_user
 Dumped database app_db to app_db.dump file
