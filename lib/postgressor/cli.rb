@@ -99,6 +99,13 @@ module Postgressor
       puts VERSION
     end
 
+    desc "print_database_url", "Print current database url"
+    def print_db_url
+      preload!
+
+      puts @conf[:url]
+    end
+
     private
 
     def set_user_to_superuser
@@ -174,13 +181,14 @@ module Postgressor
       raise "DB adapter is not postgres" unless config["adapter"].include?("postgres")
 
       @conf = {
-        url: nil,
         db: config["database"],
         host: config["host"],
         port: config["port"],
         user: config["username"],
         password: config["password"]
       }
+
+      @conf[:url] = "postgres://#{@conf[:user]}:#{@conf[:password]}@#{@conf[:host]}/#{@conf[:db]}"
     end
   end
 end
