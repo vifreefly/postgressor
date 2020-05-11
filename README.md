@@ -94,7 +94,9 @@ Dumped database app_db to app_db.dump file
 
 To restore database from backup file:
 
-> Note: sometimes backup restore will fail if current user is not superuser, so there is option `--switch_to_superuser` to temporary switch user to SUPERUSER
+> Optional flag `--createdb` will create a database first if it's not exists.
+
+> Note: sometimes restore fails if current user is not superuser, so there is optional flag `--switch_to_superuser` to temporary switch user to a SUPERUSER during the process
 
 > Note: recreate (drop and create) database before restore to omit some possible errors
 

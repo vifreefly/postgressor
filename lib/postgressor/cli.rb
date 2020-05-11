@@ -8,7 +8,7 @@ module Postgressor
   class CLI < Thor
     # https://www.postgresql.org/docs/current/app-createuser.html
     desc "createuser", "Create app database user"
-    option :superuser, type: :string, banner: "Create user as superuser"
+    option :superuser, type: :boolean, banner: "Create user as superuser"
     def createuser
       preload!
 
@@ -77,10 +77,12 @@ module Postgressor
 
     # https://www.postgresql.org/docs/current/app-pgrestore.html
     desc "restoredb", "Restore app database from backup"
-    option :switch_to_superuser, type: :string, banner: "Temporary switch user to SUPERUSER while restoring db"
+    option :switch_to_superuser, type: :boolean, banner: "Temporary switch user to SUPERUSER while restoring db"
+    option :createdb, type: :boolean, banner: "Create a database if it's not exists"
     def restoredb(dump_file_path)
       preload!
 
+      createdb if options[:createdb]
       set_user_to_superuser if options[:switch_to_superuser]
 
       command = %W(pg_restore #{dump_file_path} -d #{@conf[:db]} --no-acl --no-owner --verbose) + @pg_cli_args
@@ -99,7 +101,7 @@ module Postgressor
       puts VERSION
     end
 
-    desc "print_database_url", "Print current database url"
+    desc "print_db_url", "Print current database url"
     def print_db_url
       preload!
 
